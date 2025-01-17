@@ -2,4 +2,5 @@
 ## CWRU Programming Language Concepts Spring 2025
 
 ### Contents
-- Basics
+- Functional Practice
+  - How to define and implement functions.    
