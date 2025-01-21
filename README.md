@@ -3,8 +3,9 @@
 
 - ### Basics
   - Introductory code to using racket
-- ### Scheme Functional Practice
+- ### 1) Scheme Functional Practice
   - How to define and implement functions.
-- ### Scheme List
-  - #### Scheme List Practice
-    - List Basics     
+- ### 2) Scheme List
+  - How to inspect lists.
+- ### 3) Scheme List Building
+  - How to modify lists.
