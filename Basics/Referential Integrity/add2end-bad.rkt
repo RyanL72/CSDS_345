@@ -11,3 +11,8 @@
     (if (null? (cdr lis))
     (set-cdr! lis (cons x '()))
     (add2end-bad-helper x (cdr lis)))))
+
+; due to non-referential integrity this did not only append x to end of list but the other end as well and so was y.
+(define fun2
+  (lambda(lis)
+    (append (add2end-bad 'x lis) (add2end-bad 'y lis))))
