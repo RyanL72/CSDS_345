@@ -9,7 +9,7 @@
   - How to inspect lists.
 - ### 3) Scheme List Building
   - How to modify and create new lists.
-  - List Structure (pair of 'car' and 'cdr').
   - Referential Integrity.
+  - List Structure (pair of 'car' and 'cdr').
 - ### 4) Scheme Sublists
   - How to handle possible lists in lists.
