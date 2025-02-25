@@ -1,3 +1,2 @@
-var x = 1;
-y = 10 + x;
-return y;
+
+return 6 * -(4 * 2) + 9;
