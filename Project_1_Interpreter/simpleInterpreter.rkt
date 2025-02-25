@@ -53,7 +53,9 @@
       (error 'update "Variable ~a not declared" var)
       (map (lambda (pair) (if (equal? (car pair) var) (cons var val) pair)) state)))
 
-
+;;===============================================================
+;; Processing
+;;===============================================================
 
 ;; Evaluate arithmetic expressions
 (define (eval-expr expr state)
@@ -64,7 +66,7 @@
     ;; Variables: Lookup their value
     ((symbol? expr) (lookup state expr))
 
-    ;; Binary arithmetic operations (recursively evaluate both sides)
+    ;; Binary arithmetic and boolean operations (recursively evaluate both sides)
     ((and (list? expr) (equal? (length expr) 3))
      (let* ((op (car expr))
             (left (eval-expr (cadr expr) state))
@@ -75,10 +77,20 @@
          ((*) (* left right))
          ((/) (if (zero? right) (error 'eval-expr "Division by zero") (quotient left right)))
          ((%) (modulo left right))
+
+         ;; Boolean expressions return `#t` or `#f`
+         ((<) (< left right))
+         ((>) (> left right))
+         ((<=) (<= left right))
+         ((>=) (>= left right))
+         ((==) (= left right))
+         ((!=) (not (= left right)))
+
          (else (error 'eval-expr "Unknown operator: ~a" op)))))
 
     ;; Invalid expressions
     (else (error 'eval-expr "Unknown expression: ~a" expr))))
+
 
 
 
@@ -100,8 +112,18 @@
     ((and (list? stmt) (equal? (car stmt) '=))
      (update state (cadr stmt) (eval-expr (caddr stmt) state)))
 
+    ;; Handle if statements: (if <condition> <then-stmt> <optional-else-stmt>)
+    ((and (list? stmt) (equal? (car stmt) 'if))
+     (let* ((condition (eval-expr (cadr stmt) state)))
+       (if condition
+           (eval-stmt (caddr stmt) state) ;; Execute `then` branch
+           (if (= (length stmt) 4)
+               (eval-stmt (cadddr stmt) state) ;; Execute `else` branch if present
+               state)))) ;; No `else`, return unchanged state
+
     ;; Unknown statement
     (else (error 'eval-stmt "Unknown statement: ~a" stmt))))
+
 
 
 ;; Evaluate a list of statements sequentially.
