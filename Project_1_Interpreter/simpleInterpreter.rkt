@@ -53,6 +53,7 @@
       (error 'update "Variable ~a not declared" var)
       (map (lambda (pair) (if (equal? (car pair) var) (cons var val) pair)) state)))
 
+
 ;;===============================================================
 ;; Processing
 ;;===============================================================
@@ -64,7 +65,7 @@
     ((number? expr) expr)
 
     ;; Variables: Lookup their value
-    ((symbol? expr) (lookup state expr))
+    ((symbol? expr) (lookup state expr))  ;; Lookup will now throw an error if undefined
 
     ;; Binary arithmetic and boolean operations (recursively evaluate both sides)
     ((and (list? expr) (equal? (length expr) 3))
@@ -78,7 +79,7 @@
          ((/) (if (zero? right) (error 'eval-expr "Division by zero") (quotient left right)))
          ((%) (modulo left right))
 
-         ;; Boolean expressions return `#t` or `#f`
+         ;; Boolean operations
          ((<) (< left right))
          ((>) (> left right))
          ((<=) (<= left right))
@@ -90,6 +91,7 @@
 
     ;; Invalid expressions
     (else (error 'eval-expr "Unknown expression: ~a" expr))))
+
 
 
 
