@@ -44,11 +44,30 @@
       (cons (cons var val) state)))
 
 
-;; Evaluate an expression in a given state.
+;; Evaluate arithmetic expressions
 (define (eval-expr expr state)
   (cond
+    ;; Numbers evaluate to themselves
     ((number? expr) expr)
+
+    ;; Binary arithmetic operations (recursively evaluate both sides)
+    ((and (list? expr) (equal? (length expr) 3))
+     (let* ((op (car expr))
+            (left (eval-expr (cadr expr) state))
+            (right (eval-expr (caddr expr) state)))
+       (case op
+         ((+) (+ left right))
+         ((-) (- left right))
+         ((*) (* left right))
+         ((/) (if (zero? right)
+                  (error 'eval-expr "Division by zero")
+                  (quotient left right)))   ;; Use `quotient` for integer division
+         ((%) (modulo left right))
+         (else (error 'eval-expr "Unknown operator: ~a" op)))))
+
+    ;; Invalid expressions
     (else (error 'eval-expr "Unknown expression: ~a" expr))))
+
 
 ;; Evaluate a single statement in the current state.
 (define (eval-stmt stmt state)
