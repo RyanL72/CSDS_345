@@ -27,21 +27,32 @@
 ;;===============================================================
 
 ;; Create an empty state (an association list)
+;; Create an empty state (an association list)
 (define (make-empty-state)
   '())
 
-;; Lookup a variable in the state. Error if not found.
+;; Lookup a variable in the state. Error if not found or unassigned.
 (define (lookup state var)
   (let ([binding (assoc var state)])
-    (if binding
-        (cdr binding)
-        (error 'lookup "Variable ~a not declared" var))))
+    (if (not binding)
+        (error 'lookup "Variable ~a not declared" var)
+        (let ([value (cdr binding)])
+          (if (equal? value '*unassigned*)
+              (error 'lookup "Variable ~a used before assignment" var)
+              value)))))
 
-;; Bind a new variable to a value.
+;; Bind a new variable with an initial value (or mark as unassigned).
 (define (bind state var val)
   (if (assoc var state)
       (error 'bind "Variable ~a already declared" var)
       (cons (cons var val) state)))
+
+;; Update an existing variable’s value in the state.
+(define (update state var val)
+  (if (not (assoc var state))
+      (error 'update "Variable ~a not declared" var)
+      (map (lambda (pair) (if (equal? (car pair) var) (cons var val) pair)) state)))
+
 
 
 ;; Evaluate arithmetic expressions
@@ -49,6 +60,9 @@
   (cond
     ;; Numbers evaluate to themselves
     ((number? expr) expr)
+
+    ;; Variables: Lookup their value
+    ((symbol? expr) (lookup state expr))
 
     ;; Binary arithmetic operations (recursively evaluate both sides)
     ((and (list? expr) (equal? (length expr) 3))
@@ -59,9 +73,7 @@
          ((+) (+ left right))
          ((-) (- left right))
          ((*) (* left right))
-         ((/) (if (zero? right)
-                  (error 'eval-expr "Division by zero")
-                  (quotient left right)))   ;; Use `quotient` for integer division
+         ((/) (if (zero? right) (error 'eval-expr "Division by zero") (quotient left right)))
          ((%) (modulo left right))
          (else (error 'eval-expr "Unknown operator: ~a" op)))))
 
@@ -69,15 +81,28 @@
     (else (error 'eval-expr "Unknown expression: ~a" expr))))
 
 
+
 ;; Evaluate a single statement in the current state.
 (define (eval-stmt stmt state)
   (cond
-    ;; Handle a return statement: (return <expr>)
+    ;; Handle return statement: (return <expr>)
     ((and (list? stmt) (equal? (car stmt) 'return))
      (let ([val (eval-expr (cadr stmt) state)])
-       ;; Bind 'return in the state with the computed value.
        (bind state 'return val)))
+
+    ;; Handle variable declaration: (var <variable>) or (var <variable> <value>)
+    ((and (list? stmt) (equal? (car stmt) 'var))
+     (if (= (length stmt) 2)
+         (bind state (cadr stmt) '*unassigned*)  ;; Mark as unassigned
+         (bind state (cadr stmt) (eval-expr (caddr stmt) state))))
+
+    ;; Handle assignment: (= <variable> <value>)
+    ((and (list? stmt) (equal? (car stmt) '=))
+     (update state (cadr stmt) (eval-expr (caddr stmt) state)))
+
+    ;; Unknown statement
     (else (error 'eval-stmt "Unknown statement: ~a" stmt))))
+
 
 ;; Evaluate a list of statements sequentially.
 (define (eval-statements stmts state)
@@ -85,9 +110,10 @@
     ((null? stmts) state)
     (else
      (let ([new-state (eval-stmt (car stmts) state)])
-       (if (assoc 'return new-state)
+       (if (assoc 'return new-state)   ;; Stop if return encountered
            new-state
            (eval-statements (cdr stmts) new-state))))))
+
 
 (define (interpret filename)
   (let* ([parse-tree (parser filename)]       ; parser returns a syntax tree
