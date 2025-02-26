@@ -140,8 +140,17 @@
                (eval-stmt (cadddr stmt) state) ;; Execute `else` branch if present
                state)))) ;; No `else`, return unchanged state
 
+    ;; Handle while statements: (while <condition> <body>)
+    ((and (list? stmt) (equal? (car stmt) 'while))
+     (let loop ([current-state state])
+       (if (eval-expr (cadr stmt) current-state)  ;; Check condition
+           (loop (eval-stmt (caddr stmt) current-state))  ;; Execute body, repeat
+           current-state)))  ;; Exit loop when condition is false
+
     ;; Unknown statement
     (else (error 'eval-stmt "Unknown statement: ~a" stmt))))
+
+
 
 
 
