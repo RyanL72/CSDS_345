@@ -64,28 +64,45 @@
     ;; Numbers evaluate to themselves
     ((number? expr) expr)
 
-    ;; Variables: Lookup their value
-    ((symbol? expr) (lookup state expr))  ;; Lookup will now throw an error if undefined
+    ;; Recognize true and false as constants
+    ((equal? expr 'true) #t)
+    ((equal? expr 'false) #f)
 
-    ;; Binary arithmetic and boolean operations (recursively evaluate both sides)
-    ((and (list? expr) (equal? (length expr) 3))
+    ;; Variables: Lookup their value
+    ((symbol? expr) (lookup state expr))
+
+    ;; Unary negation (-expr)
+    ((and (list? expr) (= (length expr) 2) (equal? (car expr) '-))
+     (- (eval-expr (cadr expr) state)))
+
+    ;; Logical NOT (!expr)
+    ((and (list? expr) (= (length expr) 2) (equal? (car expr) '!))
+     (not (eval-expr (cadr expr) state)))
+
+    ;; Binary arithmetic, comparison, and boolean operations
+    ((and (list? expr) (= (length expr) 3))
      (let* ((op (car expr))
             (left (eval-expr (cadr expr) state))
             (right (eval-expr (caddr expr) state)))
        (case op
+         ;; Arithmetic operators
          ((+) (+ left right))
          ((-) (- left right))
          ((*) (* left right))
          ((/) (if (zero? right) (error 'eval-expr "Division by zero") (quotient left right)))
          ((%) (modulo left right))
 
-         ;; Boolean operations
+         ;; Comparison operators
          ((<) (< left right))
          ((>) (> left right))
          ((<=) (<= left right))
          ((>=) (>= left right))
          ((==) (= left right))
          ((!=) (not (= left right)))
+
+         ;; Boolean logic
+         ((&&) (and left right))
+         ((||) (or left right))
 
          (else (error 'eval-expr "Unknown operator: ~a" op)))))
 
@@ -138,11 +155,21 @@
            new-state
            (eval-statements (cdr stmts) new-state))))))
 
+;;===============================================================
+;; Main Functionality
+;;===============================================================
+
+(define (normalize-return val)
+  (cond
+    ((equal? val #t) 'true)  ;; Convert #t → true
+    ((equal? val #f) 'false) ;; Convert #f → false
+    (else val)))             ;; Return other values as-is
 
 (define (interpret filename)
-  (let* ([parse-tree (parser filename)]       ; parser returns a syntax tree
+  (let* ([parse-tree (parser filename)]
          [initial-state (make-empty-state)]
          [final-state (eval-statements parse-tree initial-state)])
-    (lookup final-state 'return)))
+    (normalize-return (lookup final-state 'return))))
+
 
 
