@@ -1,3 +1,32 @@
+-- comment
+
+{- 
+Multi line comment 
+-}
+
+-- apppend some stuff
+myappend1 l1 l2 =
+    if l1 == []
+        then
+            l2
+        else
+            (head l1) : myappend1 (tail l1) l2
+    
+-- append with lambda
+-- when using lambdas, haskell might not be able to infer
+myappend2:: (Eq a) => [a] -> [a] -> [a]
+myappend2 =
+    \ l1 l2 ->
+        if l1 ==[]  
+            then    
+                l2
+            else 
+                (head l1) : myappend2 (tail l1) l2
+
+-- append with pattern matching
+myappend3 [] l = l
+myappend3 (h:t) l = h : myappend3 t l
+
 {-
 Write a Haskell function squares that takes a list of numbers are returns a list where each number is squared.
 
@@ -31,3 +60,9 @@ squares2 =
 -- pattern matching
 squares3 [] = []
 squares3 (h:t) = (h * h) : squares3 t
+
+{- Functions and List -}
+
+-- reverse a list
+myreverse1 [] = []
+myreverse1 (h:t) = (myreverse1 t) ++ (h) 
