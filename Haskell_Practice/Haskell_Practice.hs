@@ -6,6 +6,7 @@ interleave3 (x:xs) [] [] = x : interleave3 xs [] []
 interleave3 [] (y:ys) [] = y : interleave3 [] ys []
 interleave3 [] [] (z:zs) = z : interleave3 [] [] zs
 interleave3 (x:xs) (y:ys) [] = x : y : interleave3 xs ys []
+interleave3 (x:xs) [] (z:zs) = x : z : interleave3 xs [] zs
 interleave3 [] (y:ys) (z:zs) = y : z : interleave3 [] ys zs
 interleave3 (x:xs) (y:ys) (z:zs) = x : y : z : interleave3 xs ys zs
 
